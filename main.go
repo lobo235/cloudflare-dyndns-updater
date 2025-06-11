@@ -121,11 +121,19 @@ func main() {
 	ipURLv6 := getEnv("IP_CHECK_URL_V6", defaultIPURLv6)
 	checkInterval := getCheckInterval()
 
-	log.Printf("\nCurrent Configuration:\n%s\n%s\n%s\n%s\n",
+	// New: optional Cloudflare env vars
+	cfAPIToken := os.Getenv("CF_API_TOKEN")
+	cfDomain := os.Getenv("CF_DOMAIN")
+	cfRecords := os.Getenv("CF_RECORDS") // Expected as comma-separated list
+
+	log.Printf("\nCurrent Configuration:\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
 		fmt.Sprintf("  %-24s = %s", "IP_FILE", ipFile),
 		fmt.Sprintf("  %-24s = %s", "IP_CHECK_URL_V4", ipURLv4),
 		fmt.Sprintf("  %-24s = %s", "IP_CHECK_URL_V6", ipURLv6),
 		fmt.Sprintf("  %-24s = %.0f", "CHECK_INTERVAL_MINUTES", checkInterval.Minutes()),
+		fmt.Sprintf("  %-24s = %s", "CF_API_TOKEN", maskToken(cfAPIToken)),
+		fmt.Sprintf("  %-24s = %s", "CF_DOMAIN", cfDomain),
+		fmt.Sprintf("  %-24s = %s", "CF_RECORDS", cfRecords),
 	)
 
 	signalChan := make(chan os.Signal, 1)
@@ -154,4 +162,14 @@ func main() {
 	// Let goroutine finish if it’s in the middle of work
 	time.Sleep(1 * time.Second)
 	log.Println("Shutdown complete")
+}
+
+func maskToken(token string) string {
+	if token == "" {
+		return ""
+	}
+	if len(token) <= 6 {
+		return "******"
+	}
+	return token[:3] + "..." + token[len(token)-3:]
 }
